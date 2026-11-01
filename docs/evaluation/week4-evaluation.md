@@ -1,6 +1,6 @@
 # Week 4: evaluating CiteDesk with a golden dataset and LangSmith
 
-This note explains what the Week 4 evaluation work is, why it was needed, how to run it again, and what it found. The numbers and the reasoning are in `evals/results/`; this page is the map.
+This note explains what the Week 4 evaluation work is, why it was needed, how to run it again, and what it found. The numbers and the reasoning are in `evals/results/`; this page is the map. New to evaluation? Start with [week4-walkthrough.md](week4-walkthrough.md), a plain-language, step-by-step explanation with diagrams.
 
 ## What this is
 
