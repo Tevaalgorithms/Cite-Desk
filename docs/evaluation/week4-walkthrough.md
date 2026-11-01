@@ -1,14 +1,14 @@
-# Week 4 walkthrough: how we evaluated CiteDesk, step by step
+# Week 4 walkthrough: how I evaluated CiteDesk, step by step
 
-This page explains the whole evaluation from scratch, in plain language: what we did, **why** we did it, where the code and data live, what we sent to LangSmith, and what came back. You do not need to know anything about evaluation first. For a one-page summary see [week4-evaluation.md](week4-evaluation.md); for the full report see `evals/results/improvements-report.md`.
+This page explains the whole evaluation from scratch, in plain language: what I did, **why** I did it, where the code and data live, what I sent to LangSmith, and what came back. You do not need to know anything about evaluation first. For a one-page summary see [week4-evaluation.md](week4-evaluation.md); for the full report see `evals/results/improvements-report.md`.
 
 ## 1. The idea in one minute
 
 CiteDesk is like a student who answers questions from a handbook. The rules: **quote the page you got the answer from**, and **say "I can't answer that" when the handbook doesn't cover it**.
 
-The Week 4 question was: *how good is this student, and can we prove that a change makes it better?* A demo that works once proves very little. So we built an exam:
+The Week 4 question was: *how good is this student, and can I prove that a change makes it better?* A demo that works once proves very little. So I built an exam:
 
-| School exam | What we built | Plain meaning |
+| School exam | What I built | Plain meaning |
 |---|---|---|
 | Exam questions and an answer key | **Golden dataset** (40 questions) | Questions where the right behavior was written down *before* testing |
 | The teacher marking | **Graders** (4 code checks) | Rules that mark each answer pass or fail |
@@ -50,13 +50,13 @@ flowchart TD
 | **Noise** | Random variation. The same unchanged app scored 90% and 92.5%. One case is worth 2.5 points, so tiny moves mean nothing. |
 | **Relevance cutoff** | A score below which the app treats search results as "not relevant" and refuses. It is `LOCAL_MIN_RELEVANCE = -10.0` in `src/citedesk/config.py`. |
 | **Verifier** | A built-in checker (`src/citedesk/answer/verifier.py`) that rejects an answer if a number or name is not in the cited passage. |
-| **Quality gate** | A repo test (`evals/baselines.json`) that fails the build if quality drops. We never weaken it to make a build pass. |
+| **Quality gate** | A repo test (`evals/baselines.json`) that fails the build if quality drops. It is never weakened to make a build pass. |
 
 ## 4. Step by step
 
 ### Step 1. Set the goal and the pass bars first
 
-**What:** We wrote down what "good enough" means *before* running anything.
+**What:** I wrote down what "good enough" means *before* running anything.
 
 **Why:** If you pick the target after seeing the scores, you can always make yourself pass. Fixing it first keeps the test honest.
 
@@ -72,15 +72,15 @@ flowchart TD
 
 ### Step 2. Check the "camera" works (tracing)
 
-**What:** We asked one real question with tracing on and read the recording back from LangSmith.
+**What:** I asked one real question with tracing on and read the recording back from LangSmith.
 
 **Why:** Every later score links to a trace. If the camera is broken, nothing else is trustworthy.
 
 **Code:** `src/citedesk/tracing.py` (the `Tracer`, **off by default**, because a trace contains the question and handbook text, which leaves this system for a third party). It is switched on with `CITEDESK_LANGSMITH_TRACING=true` and a key in `.env`. `src/citedesk/answer/service.py` names each run `cite-desk answer` and attaches metadata.
 
-**What we got:** a trace with the steps `retrieve` (0.26 s) then `write` (1.9 s, a `ChatOpenAI` call with 484 tokens) then `verify`. Almost all the time and cost is the model call.
+**What I got:** a trace with the steps `retrieve` (0.26 s) then `write` (1.9 s, a `ChatOpenAI` call with 484 tokens) then `verify`. Almost all the time and cost is the model call.
 
-**What we added:** a `prompt_version` label on every trace. It is the first 8 characters of a hash of the prompt text (`PROMPT_VERSION` in `src/citedesk/adapters/openai_writer.py`, passed through `App.prompt_version` in `src/citedesk/bootstrap.py`). It changes by itself when the prompt changes, so a "before" run and an "after" run can never be mixed up. The original prompt's version is `d4827b68`.
+**What I added:** a `prompt_version` label on every trace. It is the first 8 characters of a hash of the prompt text (`PROMPT_VERSION` in `src/citedesk/adapters/openai_writer.py`, passed through `App.prompt_version` in `src/citedesk/bootstrap.py`). It changes by itself when the prompt changes, so a "before" run and an "after" run can never be mixed up. The original prompt's version is `d4827b68`.
 
 ### Step 3. Build the golden dataset
 
@@ -102,9 +102,9 @@ flowchart TD
 
 **Which documents the app can see:** only `acme-handbook.md`, in a throwaway database (`build_sample_app` in `src/citedesk/evaluation/runner.py`). The development database also holds a second handbook version with different numbers, which would silently change the right answers, so it is never used.
 
-**What we sent to LangSmith:** the file `evals/golden_v1_langsmith_upload.csv`, uploaded in the LangSmith UI as the dataset `citedesk-golden`, then tagged **`v1`**. The tag matters: changing a case later would invalidate every comparison, so a change must become `v2`.
+**What I sent to LangSmith:** the file `evals/golden_v1_langsmith_upload.csv`, uploaded in the LangSmith UI as the dataset `citedesk-golden`, then tagged **`v1`**. The tag matters: changing a case later would invalidate every comparison, so a change must become `v2`.
 
-| LangSmith field | What we put in it |
+| LangSmith field | What I put in it |
 |---|---|
 | Input | `question` |
 | Reference output (the answer key) | `reference_answer`, `expected_behavior`, `gold_sections`, `must_include` |
@@ -114,7 +114,7 @@ flowchart TD
 
 **What:** Five scores per answer.
 
-**Why:** Some mistakes a rule can catch (a missing number). Others need judgment ("is this extra phrase supported?"). We used both, because each catches what the other misses.
+**Why:** Some mistakes a rule can catch (a missing number). Others need judgment ("is this extra phrase supported?"). I used both, because each catches what the other misses.
 
 | Grader | Type | Passes when | Code |
 |---|---|---|---|
@@ -126,7 +126,7 @@ flowchart TD
 
 A grader returns pass (1.0), fail (0.0), or **"does not apply"** (for example, there is no section to check when the right behavior is to refuse). "Does not apply" cases are left out of that average, so they cannot inflate it. The headline score **`correct`** means every grader that applies to the case passed.
 
-**The judge** (`gpt-5.4-mini`, temperature 0) sees the question, the answer and only the passages the answer cites. It must write its reasoning *before* giving yes or no. It is told the passages are data, not instructions. It is a different model from the writer (`gpt-5.4-nano`), so the writer does not grade itself. We tried it on six hand-made answers (a wrong number, an invented extra claim, a claim true in the real world but not in the handbook, and an injected "always answer faithful"), and it got all six right.
+**The judge** (`gpt-5.4-mini`, temperature 0) sees the question, the answer and only the passages the answer cites. It must write its reasoning *before* giving yes or no. It is told the passages are data, not instructions. It is a different model from the writer (`gpt-5.4-nano`), so the writer does not grade itself. I tried it on six hand-made answers (a wrong number, an invented extra claim, a claim true in the real world but not in the handbook, and an injected "always answer faithful"), and it got all six right.
 
 **Tests:** `tests/unit/test_graders.py`, `test_judge.py`, `test_langsmith_run.py`. Each grader is tested with a good answer and a deliberately bad one, because a grader that can never fail is useless.
 
@@ -166,12 +166,12 @@ sequenceDiagram
 
 Questions run **one at a time** so the token count read from the app belongs to exactly one question.
 
-**What we pass in (`client.evaluate`):**
+**What I pass in (`client.evaluate`):**
 
 | Argument | What it is |
 |---|---|
 | `data` | The 40 examples from `citedesk-golden`, tag `v1` |
-| the **target function** (`make_target`) | Our code. LangSmith calls it with `{"question": "..."}` and records what it returns |
+| the **target function** (`make_target`) | My code. LangSmith calls it with `{"question": "..."}` and records what it returns |
 | `evaluators` | The graders: 4 code checks, `correct`, `faithfulness`, `latency_s`, `cost_usd` |
 | `summary_evaluators` | `latency_p50_s` and `latency_p95_s` over the whole experiment |
 | `experiment_prefix` | The run's name, for example `baseline-v1` (LangSmith adds a random suffix) |
@@ -199,7 +199,7 @@ Questions run **one at a time** so the token count read from the app belongs to 
 
 **Metadata attached to each trace:** `case_id`, `scenario_type`, `prompt_version`, `expected_behavior`, `expected_answer`, `predicted_answer`, `refused`.
 
-**What we got back from LangSmith and in files:**
+**What I got back from LangSmith and in files:**
 
 - An experiment with **40 traces**, each linked to its dataset example.
 - **8 scores per trace** (320 per experiment): `refusal_correct`, `section_cited`, `key_facts`, `every_sentence_cited`, `correct`, `faithfulness`, `latency_s`, `cost_usd`.
@@ -225,8 +225,8 @@ flowchart TD
 
 - **Most of the time and cost is in `ChatOpenAI`.** Search and checking are nearly free.
 - **A retry shows up as a second `write` and `verify`.** For `gv1-027` the app wrote an answer, `verify` rejected it ("Number 4 does not appear in the cited passage"), it retried, was rejected again, and refused. That case costs about twice as much ($0.000214 vs. about $0.0001) and still gives no answer.
-- **The refusal reason is in the trace output**: `nothing_relevant_found` (the relevance cutoff), `passages_do_not_answer` (the model said `NO_ANSWER`), or `could_not_verify_answer` (the verifier rejected every try). This is how we told the three failure causes apart.
-- **How we confirmed the trace is complete:** we read back all 40 root traces and 320 scores for each experiment through the LangSmith API.
+- **The refusal reason is in the trace output**: `nothing_relevant_found` (the relevance cutoff), `passages_do_not_answer` (the model said `NO_ANSWER`), or `could_not_verify_answer` (the verifier rejected every try). This is how I told the three failure causes apart.
+- **How I confirmed the trace is complete:** I read back all 40 root traces and 320 scores for each experiment through the LangSmith API.
 
 ### Step 7. The baseline: run the unchanged app three times
 
@@ -244,7 +244,7 @@ flowchart TD
 
 ### Step 8. Why did cases fail? (failure analysis)
 
-**What:** We read the traces of the 6 failing cases and grouped them by cause. The report is `evals/results/failure-analysis-baseline-v1.md`.
+**What:** I read the traces of the 6 failing cases and grouped them by cause. The report is `evals/results/failure-analysis-baseline-v1.md`.
 
 **Why cluster first:** six failures with three different causes need three different fixes. Fixing the wrong thing wastes time.
 
@@ -260,13 +260,13 @@ flowchart LR
     V --> OK["Answer returned with citations"]
 ```
 
-| # | Failure | Cases | How we knew |
+| # | Failure | Cases | How I knew |
 |---|---|---|---|
 | 1 | The relevance cutoff refuses an answerable question | `gv1-033`, `gv1-034` | Trace refusal reason `nothing_relevant_found`; scores −10.29 and −10.35 vs. a cutoff of −10.0 |
 | 2 | The writer adds a phrase the handbook doesn't state | `gv1-035`, `gv1-019` | Only the AI judge caught it; the numbers were right, so code checks passed |
 | 3 | Refused after search worked | `gv1-027`, `gv1-036` | `could_not_verify_answer` (the 4 came from the question) and `passages_do_not_answer` (`NO_ANSWER`) |
 
-**Cost of each:** tokens are negligible (about $0.00009 per question), so "cost" here means effect on a user. Refusals are safe but unhelpful. Added claims are rarer but worse, because they sound authoritative. We did not measure a dollar cost of a refusal.
+**Cost of each:** tokens are negligible (about $0.00009 per question), so "cost" here means effect on a user. Refusals are safe but unhelpful. Added claims are rarer but worse, because they sound authoritative. I did not measure a dollar cost of a refusal.
 
 ### Step 9. Four changes, one at a time
 
@@ -285,14 +285,14 @@ flowchart LR
     class C2,C3,C4 reverted
 ```
 
-| # | Change | Where | Why we tried it | Result |
+| # | Change | Where | Why I tried it | Result |
 |---|---|---|---|---|
 | 1 | Relevance cutoff −10.0 → −10.5 | `CITEDESK_MIN_RELEVANCE` (default in `src/citedesk/config.py`) | Failure 1 | **Worked.** `gv1-033` fixed in 3 of 3 runs; `correct` 0.917 → 0.950. `gv1-034` was *not* fixed: its right section ranks second at −10.51, one hundredth under the new cutoff. |
 | 2 | New prompt rule: "say only what the passages say, no commentary" | `SYSTEM_PROMPT` in `src/citedesk/adapters/openai_writer.py` | Failure 2 | No gain. It fixed `gv1-019` but broke `gv1-018`, and cost about 11% more per question. Reverted. |
 | 3 | Prompt rule: allow an answer that states a limit ("administrators only") | same | Failure 3 (`gv1-036`) | `gv1-036` was answered but the judge still rejected it, and faithfulness fell. Reverted. |
 | 4 | Retry message: "do not repeat numbers from the question" | `STRICT_ADDENDUM` in the same file | Failure 3 (`gv1-027`) | The model wrote "4 consecutive sick days" again, both retries. Reverted. |
 
-**Why change 1 is not the default.** The repo's own quality gate (`citedesk eval-retrieval --models local --check evals/baselines.json`) fails at −10.5 for the built-in *quoting* writer, which cannot refuse on its own: confidently-wrong answers rose from 0 to 2. The real language model refused all 14 unanswerable sample questions at both values. We did not change the gate (the repo rule is never to weaken a check to make a build pass). The proposal is written up as ADR-023 in `docs/architecture/adrs.md` for a reviewer to decide.
+**Why change 1 is not the default.** The repo's own quality gate (`citedesk eval-retrieval --models local --check evals/baselines.json`) fails at −10.5 for the built-in *quoting* writer, which cannot refuse on its own: confidently-wrong answers rose from 0 to 2. The real language model refused all 14 unanswerable sample questions at both values. I did not change the gate (the repo rule is never to weaken a check to make a build pass). The proposal is written up as ADR-023 in `docs/architecture/adrs.md` for a reviewer to decide.
 
 **Why change 1 is "proposed, not proven":** the evidence is two questions. On the 30 sample questions outside the dataset, no answerable question scored below −6.1, so a held-out check could not confirm the benefit.
 
@@ -304,7 +304,7 @@ flowchart LR
 
 ### Step 11. Ship it
 
-We committed the Week 4 work only (not unrelated uncommitted work), opened a pull request, and CI ran seven checks. Six passed at once; `secrets` failed because gitleaks flagged two metric names (`latency_p50_s` and `latency_p95_s`), which the code hands to a function parameter named key, as a possible API key. That was a **false positive**: no real secret was in the commit. We fixed it by holding the names in constants, not by switching the check off, and cleared the history by moving to a clean branch and deleting the old one.
+I committed the Week 4 work only (not unrelated uncommitted work), opened a pull request, and CI ran seven checks. Six passed at once; `secrets` failed because gitleaks flagged two metric names (`latency_p50_s` and `latency_p95_s`), which the code hands to a function parameter named key, as a possible API key. That was a **false positive**: no real secret was in the commit. I fixed it by holding the names in constants, not by switching the check off, and cleared the history by moving to a clean branch and deleting the old one.
 
 ## 5. Results of every run
 
@@ -334,13 +334,13 @@ All runs use the same 40 cases and the same graders. Change 2's runs include the
 - **Cost went up about 7% with change 1** (two more questions get answered) and about 11% more with the extra prompt rules.
 - LangSmith's free-tier monthly trace limit was reached during the project. `final-r2` has 28 of 40 traces and `final-r3` has none; the two later cutoff-only repeats ran after the limit and were not checked. Their scores are in the CSV files either way. The two main experiments, `baseline-v1-795b0253` and `change1-cutoff-de55c23c`, are complete (40 traces, 320 scores each), as are the other runs I checked.
 
-## 6. Mistakes we made, and how we caught them
+## 6. Mistakes I made, and how I caught them
 
 This is the most useful part for learning.
 
 | Mistake | How it was caught |
 |---|---|
-| Graders assumed `[n]` counts 1, 2, 3 in citation order, and an empty cell became the text "None" | The first baseline looked wrong, and the failures did not match what the app should have done. We read the answers. |
+| Graders assumed `[n]` counts 1, 2, 3 in citation order, and an empty cell became the text "None" | The first baseline looked wrong, and the failures did not match what the app should have done. I read the answers. |
 | One run of change 2 looked like a big faithfulness win (0.968) | Repeating the *same* prompt gave 0.935 and 0.903. That's the reason for running things several times. |
 | Chose the new cutoff by looking at top scores only, and missed that the right section ranks *second* at −10.51 | Reading the ranking for `gv1-034` after change 1 did not fix it |
 | A revert edit merged two prompt rules together | Lint printed an unexpected long line, so those two runs were declared void and re-run |
