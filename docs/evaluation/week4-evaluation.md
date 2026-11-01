@@ -90,3 +90,5 @@ Details in `evals/results/improvements-report.md`.
 | `evals/results/runs/` | One case-level CSV per run (void runs were deleted) |
 | `evals/results/judge-agreement-sheet.csv`, `judge-agreement-key.csv` | The 10-answer human check of the judge (the key holds the judge's verdicts) |
 | `docs/architecture/adrs.md` (ADR-023) | The relevance-cutoff decision, proposed |
+| `docs/evaluation/week4-walkthrough.md` | A plain-language, step-by-step explanation of the whole evaluation, with diagrams |
+| `docs/evaluation/week4-langsmith-trace-screenshots.md` | Real LangSmith screenshots: the experiment table, a successful trace, its metadata, and a refused trace |
