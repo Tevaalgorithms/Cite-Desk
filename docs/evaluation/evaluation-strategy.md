@@ -13,6 +13,10 @@ Every pull request is scored on retrieval, answer quality and citations, and the
 
 Not implemented yet: RAGAS and DeepEval (they need an LLM judge and an API key), the 120-question golden set reviewed by a person, and the nightly ablation run. The sample sets are small (27, 12 and 12 questions), written by the same author as the handbook, and the handbook is synthetic, so they show that the pipeline works and which stage helps, not how it will perform on a real handbook.
 
+## Week 4: golden dataset, graders and LangSmith experiments
+
+A second, smaller evaluation was added for the Week 4 project: a 40-case reviewed golden dataset, code graders plus an LLM faithfulness judge, and LangSmith experiments with one trace per question. It measures things the retrieval harness above does not (faithfulness, refusal behavior, per-question latency and cost) and was used to try four improvements. What it is, why it exists, how to run it and what it found: [week4-evaluation.md](week4-evaluation.md). It is not a release gate and does not replace the RAGAS and DeepEval work described below.
+
 ## Measured results on the sample handbook
 
 Real local models versus the offline stand-ins, final pipeline (fused + reranked), answerable questions:
