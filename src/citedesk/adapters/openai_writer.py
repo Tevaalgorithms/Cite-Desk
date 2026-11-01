@@ -5,6 +5,7 @@ every sentence against the passage it cites. The model is told to answer `NO_ANS
 passages do not contain the answer, which turns a loosely related passage into an honest refusal.
 """
 
+import hashlib
 import re
 import threading
 import time
@@ -37,6 +38,9 @@ STRICT_ADDENDUM = (
     "Your previous answer failed a check. Quote the passages' own words as closely as possible "
     "and do not paraphrase. Make sure every sentence ends with a [number] before the full stop."
 )
+
+# Labels traces so runs before and after a prompt change can be told apart; changes with the text.
+PROMPT_VERSION = hashlib.sha256((SYSTEM_PROMPT + STRICT_ADDENDUM).encode()).hexdigest()[:8]
 
 _MARKER_AFTER_PUNCTUATION = re.compile(r"([.!?])[ \t]*((?:\[\d+\][ \t]*)+)")
 _MARKER_LIST = re.compile(r"\[(\d+(?:\s*,\s*\d+)+)\]")

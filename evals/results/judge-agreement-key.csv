@@ -1,0 +1,11 @@
+row,case_id,source_run,judge_faithful,judge_reasoning
+1,gv1-018,change3-partial,0.0,"The passage states that every expense over 25 dollars needs a receipt, but it does not explicitly say that expenses of 25 dollars or less do not require a receipt. That inference goes beyond the passage."
+2,gv1-012,baseline-v1,1.0,
+3,gv1-035,baseline-v1,0.0,"The cited passage supports that employees may work remotely up to three days a week with manager approval and that remote work needs a secure home network and a company laptop. However, the answer adds “After your parental leave,” which is not stated in the passage and goes beyond it."
+4,gv1-021,baseline-v1,1.0,
+5,gv1-016,baseline-v1,1.0,
+6,gv1-019,baseline-v1,0.0,"The passage states that new parents receive 16 weeks of paid parental leave, so the answer’s duration claim is supported. However, the phrase ""which is the maximum duration stated"" goes beyond the passage, which does not say it is a maximum."
+7,gv1-036,change3-partial,0.0,"The passage states that multi-factor authentication is required for every administrator account, but it does not say that two-factor logins are mandatory or equate multi-factor authentication specifically with two-factor logins. The answer adds that interpretation beyond the passage."
+8,gv1-014,baseline-v1,1.0,
+9,gv1-001,baseline-v1,1.0,
+10,gv1-025,baseline-v1,1.0,

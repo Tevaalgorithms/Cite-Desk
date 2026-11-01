@@ -37,6 +37,7 @@ class App:
     reranker: Reranker
     model: ModelStatus  # describes and checks whichever writer is in use
     tracer: Tracer
+    prompt_version: str = "none"  # fingerprint of the writer's prompt, as in trace metadata
 
 
 def build_app(settings: Settings | None = None, *, writer: AnswerWriter | None = None) -> App:
@@ -92,6 +93,7 @@ def build_app(settings: Settings | None = None, *, writer: AnswerWriter | None =
                 "model": description.model,
                 "models": settings.models,
                 "vector_index": settings.vector_index,
+                "prompt_version": _prompt_version(description),
             },
         ),
         repository=repository,
@@ -100,6 +102,7 @@ def build_app(settings: Settings | None = None, *, writer: AnswerWriter | None =
         reranker=reranker,
         model=model,
         tracer=tracer,
+        prompt_version=_prompt_version(description),
     )
 
 
@@ -131,6 +134,15 @@ def build_tracer(settings: Settings) -> Tracer:
         settings.langsmith_project,
         hide_content=settings.langsmith_hide_content,
     )
+
+
+def _prompt_version(description: ModelInfo) -> str:
+    """Fingerprint of the writer's prompt, or "none" for a writer that has no prompt."""
+    if description.writer != "openai":
+        return "none"
+    from citedesk.adapters.openai_writer import PROMPT_VERSION
+
+    return PROMPT_VERSION
 
 
 def build_writer(settings: Settings, tracer: Tracer | None = None) -> AnswerWriter:
